@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. Server đếm Fibonacci (NestJS)
+  fib-server:
+    build: ./fib-server
+    container_name: fib-server
+    restart: always
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=*
+    networks:
+      - migration-network
+
+  # 2. Server đếm thường (Express)
+  nau-server:
+    build: ./nau-server
+    container_name: nau-server
+    restart: always
+    environment:
+      - PORT=3002
+    networks:
+      - migration-network
+
+  # 3. Load Balancer (Nginx)
+  load-balancer:
+    image: nginx:alpine
+    container_name: load-balancer
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80" # Map port 80 của Nginx ra port 8080 của máy chủ
+    depends_on:
+      - fib-server
+      - nau-server
+    networks:
+      - migration-network
+
+networks:
+  migration-network:
+    driver: bridge
