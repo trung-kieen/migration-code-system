@@ -1,5 +1,5 @@
-import { Router } from "express";
 import { getCount } from "../controllers/count.controller";
+import { Router } from "express";
 
 const router = Router();
 
