@@ -2,6 +2,13 @@ import axios from 'axios';
 
 const API_BASE_URL = '/api';
 
+// Cấu hình timeout cho axios
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 5000, // 5 giây timeout
+  timeoutErrorMessage: 'Không thể kết nối tới server (timeout sau 5 giây)'
+});
+
 export type ServerType = 'server1' | 'server2';
 export type EndpointType = 'nau' | 'fib';
 
@@ -19,11 +26,20 @@ export const api = {
     n: number
   ): Promise<CodeResponse> => {
     try {
-      const response = await axios.get<CodeResponse>(`${API_BASE_URL}/${endpoint}/${n}`);
+      const response = await axiosInstance.get<CodeResponse>(`/${endpoint}/${n}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Failed to fetch code from server');
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Không thể kết nối tới server (timeout sau 5 giây)');
+        }
+        if (error.code === 'ERR_NETWORK' || !error.response) {
+          throw new Error('Không thể kết nối tới server. Vui lòng kiểm tra xem server đang chạy.');
+        }
+        if (error.response?.status === 502 || error.response?.status === 503) {
+          throw new Error('Server đang không khả dụng. Vui lòng thử lại sau.');
+        }
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy code từ server');
       }
       throw error;
     }

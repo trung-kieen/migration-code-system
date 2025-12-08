@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Server, Monitor, ArrowRight, Play, Code2, Clock, Activity, CheckCircle, Terminal, Network, Zap } from 'lucide-react';
+import { Server, Monitor, ArrowRight, Play, Code2, Clock, Activity, CheckCircle, Terminal, Network, Zap, AlertCircle, XCircle } from 'lucide-react';
 import { api } from '../lib/api';
 
 type ServerType = 'server1' | 'server2';
@@ -55,6 +55,8 @@ export default function DistributedCodeMigration() {
   const [currentStep, setCurrentStep] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [routingInfo, setRoutingInfo] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const addLog = (message: string, type: LogType = 'info') => {
     setProcessingLog(prev => [
@@ -107,6 +109,8 @@ export default function DistributedCodeMigration() {
     setExecutionResult('');
     setCurrentStep('');
     setRoutingInfo('');
+    setErrorMessage('');
+    setShowErrorModal(false);
 
     const config = serverConfig[selectedServer];
 
@@ -120,7 +124,6 @@ export default function DistributedCodeMigration() {
       await delay(500);
 
       const startServer = performance.now();
-      // Gọi API thật từ backend thông qua load balancer
       const data = await api.getCode(selectedServer, selectedEndpoint, parseInt(n));
       const endServer = performance.now();
       setServerTime((endServer - startServer).toFixed(2));
@@ -166,8 +169,12 @@ export default function DistributedCodeMigration() {
 
     } catch (error) {
       if (error instanceof Error) {
-        addLog(`❌ Error: ${error.message}`, 'error');
-        setExecutionResult(`Error: ${error.message}`);
+        const errorMsg = error.message;
+        addLog(`❌ Lỗi: ${errorMsg}`, 'error');
+        setErrorMessage(errorMsg);
+        setShowErrorModal(true);
+        setExecutionResult(`Lỗi: ${errorMsg}`);
+        setCurrentStep('');
       }
     } finally {
       setIsRunning(false);
@@ -176,6 +183,43 @@ export default function DistributedCodeMigration() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-6">
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border-2 border-red-500 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-red-500/20">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                <XCircle className="text-red-400" size={28} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-xl text-red-400 mb-2">Không thể kết nối tới Server</h3>
+                <p className="text-slate-300 text-sm leading-relaxed">{errorMessage}</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-900/50 rounded-lg p-4 mb-4 border border-slate-700">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="text-yellow-400" size={16} />
+                <span className="text-xs font-semibold text-yellow-400">Nguyên nhân có thể:</span>
+              </div>
+              <ul className="text-xs text-slate-400 space-y-1 ml-6 list-disc">
+                <li>Server đang không chạy hoặc đã bị dừng</li>
+                <li>Load balancer không hoạt động</li>
+                <li>Cổng {serverConfig[selectedServer].port} không khả dụng</li>
+                <li>Mạng bị gián đoạn hoặc timeout</li>
+              </ul>
+            </div>
+
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-xl font-semibold transition-all"
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -351,7 +395,13 @@ export default function DistributedCodeMigration() {
               </div>
             </div>
             <div className="bg-slate-950 rounded-xl p-4 min-h-[200px] max-h-[300px] overflow-y-auto">
-              {serverCode ? (
+              {errorMessage && !serverCode ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                  <XCircle className="text-red-400 mb-3" size={32} />
+                  <p className="text-red-400 text-sm font-semibold mb-2">Không thể lấy code từ server</p>
+                  <p className="text-slate-500 text-xs">Vui lòng kiểm tra kết nối và thử lại</p>
+                </div>
+              ) : serverCode ? (
                 <div>
                   <div className="flex items-center gap-2 mb-2 text-cyan-400">
                     <Code2 size={16} />
