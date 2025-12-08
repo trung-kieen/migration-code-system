@@ -23,7 +23,6 @@ function printCountToN(n) {
 `;
 
     const call = `printCountToN(${n});`;
-
     return res.status(200).json({
       code: result,
       call: call,
