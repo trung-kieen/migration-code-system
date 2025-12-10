@@ -39,7 +39,9 @@ export const api = {
         if (error.response?.status === 502 || error.response?.status === 503) {
           throw new Error('Server đang không khả dụng. Vui lòng thử lại sau.');
         }
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy code từ server');
+        // Ưu tiên đọc .error (Nau), sau đó đến .message (Fib), cuối cùng mới là fallback
+        const serverError = error.response?.data?.message || error.response?.data?.error;
+        throw new Error(serverError || 'Lỗi khi lấy code từ server');
       }
       throw error;
     }
