@@ -23,26 +23,25 @@ newgrp docker
 
 ---
 
-### **Step 2: Copy code to each machine**
+### **Step 2: Clone code on all 3 machines**
 
-**On Machine 1 (192.168.1.20) and Machine 2 (192.168.1.21):**
 
-Copy the `fib-server` and `nau-server` directories:
 
-```bash
-# From your local machine (where this repo is cloned)
-scp -r fib-server nau-server user@192.168.1.20:~/
-scp -r fib-server nau-server user@192.168.1.21:~/
-```
+On **all three machines**, execute the following commands:
 
-**On Machine 3 (192.168.1.22):**
 
-Copy the Nginx configuration and the load balancer Docker Compose file:
 
 ```bash
-# From your local machine
-scp -r nginx docker-compose-lb.yml user@192.168.1.22:~/
+
+git clone <repo-url>
+
+cd migration-system
+
 ```
+
+
+
+<repo-url> should be replaced with the actual URL of your Git repository.
 
 ---
 
@@ -203,18 +202,6 @@ telnet 192.168.1.20 3002
 telnet 192.168.1.21 3002
 ```
 
----
-
-## 📊 **Monitoring (Optional)**
-
-If you have a `monitor.sh` script (not included in this repository by default), you can run it for real-time monitoring:
-
-```bash
-chmod +x monitor.sh
-./monitor.sh
-```
-
----
 
 ## ✅ **Final Checklist**
 
