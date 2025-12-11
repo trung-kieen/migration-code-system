@@ -57,6 +57,9 @@ export default function DistributedCodeMigration() {
   const [routingInfo, setRoutingInfo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showErrorModal, setShowErrorModal] = useState(false);
+  
+  // Local Code Cache: { [endpoint]: { code, version } }
+  const codeCache = React.useRef<Record<string, { code: string; version: string }>>({});
 
   const addLog = (message: string, type: LogType = 'info') => {
     setProcessingLog(prev => [
@@ -121,15 +124,49 @@ export default function DistributedCodeMigration() {
       setRoutingInfo(routeInfo);
       addLog(`🔄 Định tuyến request qua Load Balancer`, 'info');
       addLog(`📍 Đích: ${config.name} (${config.ip}:${config.port})`, 'info');
+      
+      // Check Cache
+      const cachedItem = codeCache.current[selectedEndpoint];
+      if (cachedItem) {
+        addLog(`💾 Đã tìm thấy bản cached (v${cachedItem.version})`, 'info');
+      }
+
       await delay(500);
 
       const startServer = performance.now();
-      const data = await api.getCode(selectedServer, selectedEndpoint, parseInt(n));
+      
+      // Request with version if available
+      const data = await api.getCode(
+        selectedServer, 
+        selectedEndpoint, 
+        parseInt(n),
+        cachedItem?.version
+      );
+      
       const endServer = performance.now();
       setServerTime((endServer - startServer).toFixed(2));
 
-      addLog(`✅ Đã lấy code thành công từ ${config.name}`, 'success');
-      setServerCode(data.code);
+      let finalCode = '';
+
+      if (data.cached && cachedItem) {
+        // Cache Hit
+        finalCode = cachedItem.code;
+        addLog(`⚡ Sử dụng Code Cached (v${data.version}) - Tiết kiệm băng thông`, 'success');
+      } else if (data.code && data.version) {
+        // Cache Miss / Update
+        finalCode = data.code;
+        codeCache.current[selectedEndpoint] = {
+          code: data.code,
+          version: data.version
+        };
+        addLog(`📥 Đã tải Code mới (v${data.version}) từ Server`, 'success');
+      } else {
+        // Fallback (should not happen with correct logic)
+        finalCode = data.code || '';
+        addLog(`⚠️ Dữ liệu không xác định, cố gắng thực thi...`, 'error');
+      }
+
+      setServerCode(finalCode);
       await delay(800);
 
       // Step 2: Code Execution
@@ -138,7 +175,7 @@ export default function DistributedCodeMigration() {
       await delay(500);
 
       const startClient = performance.now();
-      const capturedOutput = executeCode(data.code, data.call);
+      const capturedOutput = executeCode(finalCode, data.call);
       const endClient = performance.now();
       setClientTime((endClient - startClient).toFixed(2));
 

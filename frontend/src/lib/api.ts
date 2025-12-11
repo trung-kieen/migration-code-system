@@ -13,20 +13,24 @@ export type ServerType = 'server1' | 'server2';
 export type EndpointType = 'nau' | 'fib';
 
 export interface CodeResponse {
-  code: string;
+  code?: string;
   call: string;
   executable?: string;
   print_executable?: string;
+  version?: string;
+  cached?: boolean;
 }
 
 export const api = {
   getCode: async (
     _server: ServerType,
     endpoint: EndpointType,
-    n: number
+    n: number,
+    clientVersion?: string
   ): Promise<CodeResponse> => {
     try {
-      const response = await axiosInstance.get<CodeResponse>(`/${endpoint}/${n}`);
+      const query = clientVersion ? `?client_version=${clientVersion}` : '';
+      const response = await axiosInstance.get<CodeResponse>(`/${endpoint}/${n}${query}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {

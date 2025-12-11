@@ -4,9 +4,12 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   BadRequestException,
 } from '@nestjs/common';
 import * as winston from 'winston';
+
+const VERSION = '1.0.0';
 
 const logger = winston.createLogger({
   level: 'info',
@@ -29,13 +32,14 @@ class FibonacciController {
   // HEALTH CHECK ENDPOINT
   // ============================================
   @Get('health')
-  healthCheck(): { status: string; timestamp: number; server: string } {
+  healthCheck(): { status: string; timestamp: number; server: string; version: string } {
     const serverId = process.env.SERVER_ID || 'unknown';
     logger.info(`Health check from Load Balancer`);
     return {
       status: 'ok',
       timestamp: Date.now(),
       server: serverId,
+      version: VERSION,
     };
   }
 
@@ -43,15 +47,20 @@ class FibonacciController {
   // FIB ENDPOINT (giống cũ)
   // ============================================
   @Get('fib/:n')
-  getFibonacciCode(@Param('n') nParam: string): {
-    code: string;
+  getFibonacciCode(
+    @Param('n') nParam: string,
+    @Query('client_version') clientVersion: string,
+  ): {
+    code?: string;
     call: string;
-    executable: string;
-    print_executable: string;
-    server: string; // THÊM để biết server nào xử lý
+    executable?: string;
+    print_executable?: string;
+    server: string;
+    version: string;
+    cached: boolean;
   } {
     const serverId = process.env.SERVER_ID || 'unknown';
-    logger.info(`incoming GET /fib/${nParam} - Processing on ${serverId}`);
+    logger.info(`incoming GET /fib/${nParam} (Client v: ${clientVersion || 'none'}) - Processing on ${serverId}`);
 
     const n = parseInt(nParam, 10);
 
@@ -67,23 +76,37 @@ class FibonacciController {
       );
     }
 
+    const call = `fibonacci(${n})`;
+
+    // Check version
+    if (clientVersion === VERSION) {
+      logger.info(`✅ Cache hit (v${VERSION})`);
+      return {
+        call,
+        server: serverId,
+        version: VERSION,
+        cached: true
+      };
+    }
+
     logger.info(`validated n=${n}`);
 
     // Function
     const code = `function fibonacci(n) { if (n === 0) return 0; if (n === 1) return 1; let prev = 0; let curr = 1; for (let i = 2; i <= n; i++) { const next = prev + curr; prev = curr; curr = next; } return curr; }`;
-    const call = `fibonacci(${n})`;
     const executable = `${code} ${call}`;
     const print_executable = `${code} console.log(${call})`;
 
     logger.info(`generated ${code.length}-byte TS function`);
-    logger.info(`✅ Response sent from ${serverId}`);
+    logger.info(`✅ Response sent from ${serverId} (New v${VERSION})`);
 
     return { 
       code, 
       call, 
       executable, 
       print_executable,
-      server: serverId  // Client sẽ thấy server nào xử lý
+      server: serverId,
+      version: VERSION,
+      cached: false
     };
   }
 }
