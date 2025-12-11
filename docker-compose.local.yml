@@ -1,0 +1,82 @@
+version: '3.8'
+services:
+  # ==========================================
+  # LOAD BALANCER
+  # ==========================================
+  load-balancer:
+    image: nginx:alpine
+    container_name: load-balancer
+    restart: always
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    networks:
+      - migration-net
+    depends_on:
+      - fib-server-1
+      - fib-server-2
+      - nau-server-1
+      - nau-server-2
+  # ==========================================
+  # SERVER 1 (Simulated Machine 1)
+  # ==========================================
+  fib-server-1:
+    build: ./fib-server
+    container_name: fib-server-1
+    restart: always
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=*
+      - SERVER_ID=server-1
+    networks:
+      - migration-net
+  nau-server-1:
+    build: ./nau-server
+    container_name: nau-server-1
+    restart: always
+    environment:
+      - PORT=3002
+      - SERVER_ID=server-1
+    networks:
+      - migration-net
+  # ==========================================
+  # SERVER 2 (Simulated Machine 2)
+  # ==========================================
+  fib-server-2:
+    build: ./fib-server
+    container_name: fib-server-2
+    restart: always
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=*
+      - SERVER_ID=server-2
+    networks:
+      - migration-net
+  nau-server-2:
+    build: ./nau-server
+    container_name: nau-server-2
+    restart: always
+    environment:
+      - PORT=3002
+      - SERVER_ID=server-2
+    networks:
+      - migration-net
+      # ==========================================
+      # FRONTEND
+      # ==========================================
+      # frontend:
+      #   build: ./frontend
+      #   container_name: frontend
+      #   restart: always
+      #   ports:
+      #     - "3000:3000"
+      #   environment:
+      #     - API_URL=http://load-balancer:80
+      #   networks:
+      #     - migration-net
+      #   depends_on:
+      #     - load-balancer
+networks:
+  migration-net:
+    driver: bridge
