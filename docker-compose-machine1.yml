@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Máy 1 chạy CẢ fib-server VÀ nau-server
+  fib-server:
+    build: ./fib-server
+    container_name: fib-server-m1
+    restart: always
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=*
+      - SERVER_ID=machine-1  # Để phân biệt trong logs
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    # Health check để Load Balancer biết server còn sống không
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nau-server:
+    build: ./nau-server
+    container_name: nau-server-m1
+    restart: always
+    environment:
+      - PORT=3002
+      - SERVER_ID=machine-1
+    ports:
+      - "3002:3002"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  app-network:
+    driver: bridge

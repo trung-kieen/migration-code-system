@@ -16,7 +16,8 @@ const logger = winston.createLogger({
       const timestamp = String(info.timestamp);
       const level = String(info.level).toUpperCase();
       const message = String(info.message);
-      return `[${timestamp}] ${level}  ${message}`;
+      const serverId = process.env.SERVER_ID || 'unknown';
+      return `[${timestamp}] [${serverId}] ${level}  ${message}`;
     }),
   ),
   transports: [new winston.transports.Console()],
@@ -24,14 +25,33 @@ const logger = winston.createLogger({
 
 @Controller()
 class FibonacciController {
+  // ============================================
+  // HEALTH CHECK ENDPOINT
+  // ============================================
+  @Get('health')
+  healthCheck(): { status: string; timestamp: number; server: string } {
+    const serverId = process.env.SERVER_ID || 'unknown';
+    logger.info(`Health check from Load Balancer`);
+    return {
+      status: 'ok',
+      timestamp: Date.now(),
+      server: serverId,
+    };
+  }
+
+  // ============================================
+  // FIB ENDPOINT (giống cũ)
+  // ============================================
   @Get('fib/:n')
   getFibonacciCode(@Param('n') nParam: string): {
     code: string;
     call: string;
     executable: string;
     print_executable: string;
+    server: string; // THÊM để biết server nào xử lý
   } {
-    logger.info(`incoming GET /fib/${nParam}`);
+    const serverId = process.env.SERVER_ID || 'unknown';
+    logger.info(`incoming GET /fib/${nParam} - Processing on ${serverId}`);
 
     const n = parseInt(nParam, 10);
 
@@ -56,9 +76,15 @@ class FibonacciController {
     const print_executable = `${code} console.log(${call})`;
 
     logger.info(`generated ${code.length}-byte TS function`);
-    logger.info('responded with code');
+    logger.info(`✅ Response sent from ${serverId}`);
 
-    return { code, call, executable, print_executable };
+    return { 
+      code, 
+      call, 
+      executable, 
+      print_executable,
+      server: serverId  // Client sẽ thấy server nào xử lý
+    };
   }
 }
 
@@ -72,8 +98,6 @@ async function bootstrap() {
     logger: false,
   });
 
-  // Enable CORS for React/Vite development (default port 5173) and system environment
-  // const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
   const corsOrigin = process.env.CORS_ORIGIN || '*';
   app.enableCors({
     origin: corsOrigin,
@@ -82,8 +106,10 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3001;
+  const serverId = process.env.SERVER_ID || 'unknown';
+  
   await app.listen(port);
-  logger.info(`NestJS server listening on port ${port}`);
+  logger.info(`🚀 NestJS Fibonacci Server (${serverId}) listening on port ${port}`);
   logger.info(`CORS enabled for origin: ${corsOrigin}`);
 }
 
