@@ -57,7 +57,7 @@ export default function DistributedCodeMigration() {
   const [routingInfo, setRoutingInfo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showErrorModal, setShowErrorModal] = useState(false);
-  
+
   // Local Code Cache: { [endpoint]: { code, version } }
   const codeCache = React.useRef<Record<string, { code: string; version: string }>>({});
 
@@ -75,7 +75,7 @@ export default function DistributedCodeMigration() {
     const originalConsoleLog = console.log;
 
     console.log = (...args: unknown[]): void => {
-      const output = args.map(arg => 
+      const output = args.map(arg =>
         typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
       ).join(' ');
       capturedOutput.push(output);
@@ -124,7 +124,7 @@ export default function DistributedCodeMigration() {
       setRoutingInfo(routeInfo);
       addLog(`🔄 Định tuyến request qua Load Balancer`, 'info');
       addLog(`📍 Đích: ${config.name} (${config.ip}:${config.port})`, 'info');
-      
+
       // Check Cache
       const cachedItem = codeCache.current[selectedEndpoint];
       if (cachedItem) {
@@ -134,15 +134,15 @@ export default function DistributedCodeMigration() {
       await delay(500);
 
       const startServer = performance.now();
-      
+
       // Request with version if available
       const data = await api.getCode(
-        selectedServer, 
-        selectedEndpoint, 
+        selectedServer,
+        selectedEndpoint,
         parseInt(n),
         cachedItem?.version
       );
-      
+
       const endServer = performance.now();
       setServerTime((endServer - startServer).toFixed(2));
 
@@ -233,7 +233,7 @@ export default function DistributedCodeMigration() {
                 <p className="text-slate-300 text-sm leading-relaxed">{errorMessage}</p>
               </div>
             </div>
-            
+
             <div className="bg-slate-900/50 rounded-lg p-4 mb-4 border border-slate-700">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="text-yellow-400" size={16} />
@@ -273,11 +273,10 @@ export default function DistributedCodeMigration() {
             <button
               onClick={() => !isRunning && setSelectedServer('server1')}
               disabled={isRunning}
-              className={`p-6 rounded-2xl border-2 transition-all ${
-                selectedServer === 'server1'
-                  ? 'border-cyan-400 bg-cyan-900/20 shadow-lg shadow-cyan-500/30 scale-105'
-                  : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
-              }`}
+              className={`p-6 rounded-2xl border-2 transition-all ${selectedServer === 'server1'
+                ? 'border-cyan-400 bg-cyan-900/20 shadow-lg shadow-cyan-500/30 scale-105'
+                : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
+                }`}
             >
               <div className="flex flex-col items-center gap-3">
                 <Server size={40} className={selectedServer === 'server1' ? 'text-cyan-400' : 'text-slate-400'} />
@@ -323,11 +322,10 @@ export default function DistributedCodeMigration() {
             <button
               onClick={() => !isRunning && setSelectedServer('server2')}
               disabled={isRunning}
-              className={`p-6 rounded-2xl border-2 transition-all ${
-                selectedServer === 'server2'
-                  ? 'border-orange-400 bg-orange-900/20 shadow-lg shadow-orange-500/30 scale-105'
-                  : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
-              }`}
+              className={`p-6 rounded-2xl border-2 transition-all ${selectedServer === 'server2'
+                ? 'border-orange-400 bg-orange-900/20 shadow-lg shadow-orange-500/30 scale-105'
+                : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
+                }`}
             >
               <div className="flex flex-col items-center gap-3">
                 <Server size={40} className={selectedServer === 'server2' ? 'text-orange-400' : 'text-slate-400'} />
@@ -366,11 +364,10 @@ export default function DistributedCodeMigration() {
                     setSelectedServer('server1');
                   }}
                   disabled={isRunning}
-                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${
-                    selectedEndpoint === 'nau'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${selectedEndpoint === 'nau'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
                 >
                   /nau
                 </button>
@@ -380,11 +377,10 @@ export default function DistributedCodeMigration() {
                     setSelectedServer('server2');
                   }}
                   disabled={isRunning}
-                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${
-                    selectedEndpoint === 'fib'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${selectedEndpoint === 'fib'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
                 >
                   /fib
                 </button>
@@ -421,9 +417,8 @@ export default function DistributedCodeMigration() {
         {/* 4 Steps Display */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Step 1: Code Retrieval */}
-          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${
-            currentStep === 'step1' ? 'border-cyan-400 shadow-lg shadow-cyan-500/30' : 'border-slate-700/50'
-          }`}>
+          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${currentStep === 'step1' ? 'border-cyan-400 shadow-lg shadow-cyan-500/30' : 'border-slate-700/50'
+            }`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center font-bold">1</div>
               <div>
@@ -455,9 +450,8 @@ export default function DistributedCodeMigration() {
           </div>
 
           {/* Step 2: Code Execution */}
-          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${
-            currentStep === 'step2' ? 'border-blue-400 shadow-lg shadow-blue-500/30' : 'border-slate-700/50'
-          }`}>
+          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${currentStep === 'step2' ? 'border-blue-400 shadow-lg shadow-blue-500/30' : 'border-slate-700/50'
+            }`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold">2</div>
               <div>
@@ -493,9 +487,8 @@ export default function DistributedCodeMigration() {
           </div>
 
           {/* Step 3: Output Rendering */}
-          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${
-            currentStep === 'step3' ? 'border-purple-400 shadow-lg shadow-purple-500/30' : 'border-slate-700/50'
-          }`}>
+          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${currentStep === 'step3' ? 'border-purple-400 shadow-lg shadow-purple-500/30' : 'border-slate-700/50'
+            }`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center font-bold">3</div>
               <div>
@@ -521,9 +514,8 @@ export default function DistributedCodeMigration() {
           </div>
 
           {/* Step 4: Process Monitoring */}
-          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${
-            currentStep === 'step4' ? 'border-green-400 shadow-lg shadow-green-500/30' : 'border-slate-700/50'
-          }`}>
+          <div className={`bg-slate-800/40 backdrop-blur-xl rounded-2xl p-6 border-2 transition-all ${currentStep === 'step4' ? 'border-green-400 shadow-lg shadow-green-500/30' : 'border-slate-700/50'
+            }`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center font-bold">4</div>
               <div>
@@ -537,10 +529,9 @@ export default function DistributedCodeMigration() {
                   {processingLog.map((log, index) => (
                     <div key={index} className="flex items-start gap-2 text-xs">
                       <span className="text-slate-500 shrink-0">{log.time}</span>
-                      <span className={`${
-                        log.type === 'success' ? 'text-green-400' :
+                      <span className={`${log.type === 'success' ? 'text-green-400' :
                         log.type === 'error' ? 'text-red-400' : 'text-slate-300'
-                      }`}>
+                        }`}>
                         {log.message}
                       </span>
                     </div>
@@ -602,9 +593,8 @@ export default function DistributedCodeMigration() {
                         <span className="text-xs text-slate-500">({item.serverInfo})</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          item.endpoint === 'nau' ? 'bg-blue-600/30 text-blue-300' : 'bg-green-600/30 text-green-300'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${item.endpoint === 'nau' ? 'bg-blue-600/30 text-blue-300' : 'bg-green-600/30 text-green-300'
+                          }`}>
                           /{item.endpoint}
                         </span>
                         <span className="text-slate-400 text-sm">N = {item.n} ({item.totalNumbers} số)</span>

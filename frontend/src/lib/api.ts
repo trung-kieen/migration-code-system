@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Thêm dòng này để kiểm tra
+console.log('API_BASE_URL:', API_BASE_URL);
 
-// Cấu hình timeout cho axios
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 5000, // 5 giây timeout
-  timeoutErrorMessage: 'Không thể kết nối tới server (timeout sau 5 giây)'
+  timeout: 15000,
+  timeoutErrorMessage: 'Không thể kết nối tới server (timeout sau  giây)'
 });
 
 export type ServerType = 'server1' | 'server2';
@@ -30,7 +31,9 @@ export const api = {
   ): Promise<CodeResponse> => {
     try {
       const query = clientVersion ? `?client_version=${clientVersion}` : '';
+      
       const response = await axiosInstance.get<CodeResponse>(`/${endpoint}/${n}${query}`);
+      console.log('API response data:', response.data);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -43,7 +46,6 @@ export const api = {
         if (error.response?.status === 502 || error.response?.status === 503) {
           throw new Error('Server đang không khả dụng. Vui lòng thử lại sau.');
         }
-        // Ưu tiên đọc .error (Nau), sau đó đến .message (Fib), cuối cùng mới là fallback
         const serverError = error.response?.data?.message || error.response?.data?.error;
         throw new Error(serverError || 'Lỗi khi lấy code từ server');
       }
@@ -65,7 +67,6 @@ export const api = {
     };
 
     try {
-      // Strip TypeScript type annotations for browser execution
       const jsCode = code
         .replace(/:\s*number/g, '')
         .replace(/:\s*string/g, '')
